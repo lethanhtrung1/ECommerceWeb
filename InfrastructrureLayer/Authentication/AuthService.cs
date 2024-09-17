@@ -4,9 +4,9 @@ using ApplicationLayer.DTOs.Request.Account;
 using ApplicationLayer.DTOs.Response;
 using ApplicationLayer.DTOs.Response.Account;
 using ApplicationLayer.Interfaces;
+using ApplicationLayer.Logging;
 using DomainLayer.Entities.Auth;
 using InfrastructrureLayer.Data;
-using InfrastructrureLayer.Logs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,17 +22,20 @@ namespace InfrastructrureLayer.Authentication {
 		private readonly RoleManager<IdentityRole> _roleManager;
 		private readonly AppDbContext _dbContext;
 		private readonly IConfiguration _configuration;
+		private readonly ILogException _logger;
 
 		public AuthService(
 				UserManager<ApplicationUser> userManager,
 				RoleManager<IdentityRole> roleManager,
 				AppDbContext dbContext,
-				IConfiguration configuration
+				IConfiguration configuration,
+				ILogException logger
 			) {
 			_dbContext = dbContext;
 			_userManager = userManager;
 			_roleManager = roleManager;
 			_configuration = configuration;
+			_logger = logger;
 		}
 
 		public async Task CreateAdmin() {
@@ -51,7 +54,7 @@ namespace InfrastructrureLayer.Authentication {
 				await CreateAccountAsync(admin);
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				throw;
 			}
 		}
@@ -68,7 +71,7 @@ namespace InfrastructrureLayer.Authentication {
 				return new GeneralResponse(false, $"{request.Name} already exist");
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new GeneralResponse(false, ex.Message);
 			}
 		}
@@ -94,7 +97,7 @@ namespace InfrastructrureLayer.Authentication {
 				return new GeneralResponse(true, "Password has changed successfully");
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new GeneralResponse(false, ex.Message);
 			}
 		}
@@ -129,7 +132,7 @@ namespace InfrastructrureLayer.Authentication {
 				return new GeneralResponse(true, "Role changed");
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new GeneralResponse(false, ex.Message);
 			}
 		}
@@ -170,7 +173,7 @@ namespace InfrastructrureLayer.Authentication {
 				return new AuthResponseDto(false, "Error occured while creating account");
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new AuthResponseDto(false, ex.Message);
 			}
 		}
@@ -219,7 +222,7 @@ namespace InfrastructrureLayer.Authentication {
 					);
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new ApiResponse<PagedList<GetUserResponseDto>>(false, ex.Message);
 			}
 		}
@@ -241,7 +244,7 @@ namespace InfrastructrureLayer.Authentication {
 				return jwtToken;
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new AuthResponseDto(false, ex.Message);
 			}
 		}
@@ -260,7 +263,7 @@ namespace InfrastructrureLayer.Authentication {
 				return new AuthResponseDto(false, "Invalid payload");
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new AuthResponseDto(false, ex.Message);
 			}
 		}
@@ -318,7 +321,7 @@ namespace InfrastructrureLayer.Authentication {
 				return await GenerateJwtToken(userFromDb!);
 			} catch (Exception ex) {
 				// Log the original exception
-				LogException.LogExceptions(ex);
+				_logger.LogExceptions(ex);
 				return new AuthResponseDto(false, ex.Message);
 			}
 		}

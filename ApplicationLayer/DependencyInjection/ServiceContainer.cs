@@ -19,7 +19,7 @@ namespace ApplicationLayer.DependencyInjection {
 			return services;
 		}
 
-		public static IApplicationBuilder UseApplicationPoliciy(this IApplicationBuilder app) {
+		public static IApplicationBuilder UseApplicationPolicy(this IApplicationBuilder app) {
 			app.UseMiddleware<CustomExceptionMiddleware>();
 
 			return app;

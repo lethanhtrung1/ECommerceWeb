@@ -1,9 +1,11 @@
 ﻿using ApplicationLayer.Interfaces;
+using ApplicationLayer.Logging;
 using DomainLayer.Entities.Auth;
 using DomainLayer.Repositories;
 using InfrastructrureLayer.Authentication;
 using InfrastructrureLayer.Common;
 using InfrastructrureLayer.Data;
+using InfrastructrureLayer.Logs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +54,7 @@ namespace InfrastructrureLayer.DependencyInjection
 				.WriteTo.File(
 					path: "Logs/log.txt",
 					restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information,
-					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {message:lj}{NewLine}{Exception}",
+					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
 					rollingInterval: RollingInterval.Day
 				)
 				.CreateLogger();
@@ -63,6 +65,7 @@ namespace InfrastructrureLayer.DependencyInjection
 			// Dependency Injection (DI)
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddScoped<IAuthService, AuthService>();
+			services.AddScoped<ILogException, LogException>();
 
 			return services;
 		}

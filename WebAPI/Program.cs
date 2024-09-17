@@ -48,7 +48,7 @@ builder.Services.AddCors(options => {
 
 var app = builder.Build();
 
-app.UseApplicationPoliciy();
+app.UseApplicationPolicy();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
