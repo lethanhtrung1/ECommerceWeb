@@ -8,7 +8,7 @@ namespace DomainLayer.Entities {
 			Details = new HashSet<OrderDetail>();
 		}
 
-		public Guid UserId { get; set; }
+		public string UserId { get; set; }
 		public string? Note { get; set; }
 		public decimal BasePrice { get; set; }
 		public decimal FinalPrice { get; set; }

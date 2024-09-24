@@ -1,8 +1,9 @@
-﻿using ApplicationLayer.Common;
+﻿using ApplicationLayer.DTOs.Email;
 using ApplicationLayer.DTOs.Pagination;
 using ApplicationLayer.DTOs.Request.Account;
 using ApplicationLayer.DTOs.Response;
 using ApplicationLayer.DTOs.Response.Account;
+using ApplicationLayer.EmailService;
 using ApplicationLayer.Interfaces;
 using ApplicationLayer.Logging;
 using DomainLayer.Entities.Auth;
@@ -16,47 +17,30 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace InfrastructrureLayer.Authentication {
-	public class AuthService : IAuthService {
+namespace InfrastructrureLayer.Authentication
+{
+    public class AuthService : IAuthService {
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly RoleManager<IdentityRole> _roleManager;
 		private readonly AppDbContext _dbContext;
 		private readonly IConfiguration _configuration;
 		private readonly ILogException _logger;
+		private readonly IEmailSender _emailSender;
 
 		public AuthService(
 				UserManager<ApplicationUser> userManager,
 				RoleManager<IdentityRole> roleManager,
 				AppDbContext dbContext,
 				IConfiguration configuration,
-				ILogException logger
+				ILogException logger,
+				IEmailSender emailSender
 			) {
 			_dbContext = dbContext;
 			_userManager = userManager;
 			_roleManager = roleManager;
 			_configuration = configuration;
 			_logger = logger;
-		}
-
-		public async Task CreateAdmin() {
-			try {
-				if ((await _roleManager.FindByNameAsync(Constant.Role.Admin)) is null) {
-					return;
-				}
-
-				var admin = new RegistrationRequestDto {
-					Name = "Admin",
-					Email = "admin@admin.com",
-					Password = "Admin123aA@.",
-					Role = Constant.Role.Admin
-				};
-
-				await CreateAccountAsync(admin);
-			} catch (Exception ex) {
-				// Log the original exception
-				_logger.LogExceptions(ex);
-				throw;
-			}
+			_emailSender = emailSender;
 		}
 
 		public async Task<GeneralResponse> CreateRoleAsync(CreateRoleRequestDto request) {
@@ -137,12 +121,12 @@ namespace InfrastructrureLayer.Authentication {
 			}
 		}
 
-		public async Task<AuthResponseDto> CreateAccountAsync(RegistrationRequestDto request) {
+		public async Task<GeneralResponse> CreateAccountAsync(RegistrationRequestDto request) {
 			try {
 				// Check email already exist
 				var userExist = await _userManager.FindByEmailAsync(request.Email);
 				if (userExist is not null) {
-					return new AuthResponseDto(false, "Email already exist");
+					return new GeneralResponse(false, "Email already exist.");
 				}
 
 				// create user
@@ -154,27 +138,34 @@ namespace InfrastructrureLayer.Authentication {
 				};
 
 				var isCreated = await _userManager.CreateAsync(newUser, request.Password);
-
-				// if created user successfull
-				if (isCreated.Succeeded) {
-					// Assign role for user
-					if (await _roleManager.FindByNameAsync(request.Role) is null) {
-						return new AuthResponseDto(false, "Role not found");
-					}
-
-					IdentityResult assignRoleResult = await _userManager.AddToRoleAsync(newUser, request.Role);
-					if (!assignRoleResult.Succeeded) {
-						return new AuthResponseDto(false, "Error occured while creating account");
-					}
-
-					return await GenerateJwtToken(newUser);
+				if (!isCreated.Succeeded) {
+					return new GeneralResponse(false, "Error occured while creating account.");
 				}
 
-				return new AuthResponseDto(false, "Error occured while creating account");
+				var user = await _userManager.FindByEmailAsync(newUser.Email);
+				var token = await _userManager.GenerateEmailConfirmationTokenAsync(user!);
+				// Send email confirmation account
+				var message = new Message(user!.Email!, "Email confirmation token", token);
+				_emailSender.SendEmail(message);
+
+				// Assign role for user
+				if (await _roleManager.FindByNameAsync(request.Role) is null) {
+					return new GeneralResponse(false, "Role not found.");
+				}
+
+				IdentityResult assignRoleResult = await _userManager.AddToRoleAsync(newUser, request.Role);
+				if (!assignRoleResult.Succeeded) {
+					return new GeneralResponse(false, "Error occured while creating account.");
+				}
+
+				// 2FA
+				//await _userManager.SetTwoFactorEnabledAsync(user, true);
+
+				return new GeneralResponse(true, "Registration successful.");
 			} catch (Exception ex) {
 				// Log the original exception
 				_logger.LogExceptions(ex);
-				return new AuthResponseDto(false, ex.Message);
+				return new GeneralResponse(false, ex.Message);
 			}
 		}
 
@@ -229,17 +220,39 @@ namespace InfrastructrureLayer.Authentication {
 
 		public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request) {
 			try {
-				var existingUser = await _userManager.FindByEmailAsync(request.Email);
-				if (existingUser is null) {
+				var user = await _userManager.FindByEmailAsync(request.Email);
+				if (user is null) {
 					return new AuthResponseDto(false, "User is not exist");
 				}
 
-				var isCorrectPass = await _userManager.CheckPasswordAsync(existingUser, request.Password);
-				if (!isCorrectPass) {
+				var checkEmailConfirmation = await _userManager.IsEmailConfirmedAsync(user);
+				if (!checkEmailConfirmation) {
+					// Increase failed accesses
+					await _userManager.AccessFailedAsync(user);
+
+					var checkUserLockout = await _userManager.IsLockedOutAsync(user);
+					if (checkUserLockout) {
+						var content = $"Your account is locked out. If you want to reset the password, " +
+							$"you can use the forgot password link on the login page.";
+
+						var message = new Message(request.Email!, "Locked out account information", content);
+						_emailSender.SendEmail(message);
+
+						return new AuthResponseDto(false, "The account is locked out.");
+					}
+
+					return new AuthResponseDto(false, "Email or password is incorrect.");
+				}
+
+				var checkCorrectPassword = await _userManager.CheckPasswordAsync(user, request.Password);
+				if (!checkCorrectPassword) {
 					return new AuthResponseDto(false, "Your account and/or password is incorrect, please try again");
 				}
 
-				var jwtToken = await GenerateJwtToken(existingUser);
+				var jwtToken = await GenerateJwtToken(user);
+
+				// Reset access failed
+				await _userManager.ResetAccessFailedCountAsync(user);
 
 				return jwtToken;
 			} catch (Exception ex) {
@@ -280,7 +293,7 @@ namespace InfrastructrureLayer.Authentication {
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
 
 			try {
-				var tokenInVerification = jwtTokenHandler.ValidateToken(request.Token, tokenValidationParameters, out var validatedToken);
+				var tokenInVerification = jwtTokenHandler.ValidateToken(request.AccessToken, tokenValidationParameters, out var validatedToken);
 				if (validatedToken is JwtSecurityToken jwtSecurityToken) {
 					var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
 					if (result == false) {
@@ -379,11 +392,18 @@ namespace InfrastructrureLayer.Authentication {
 
 		private string RandomStringGeneration() {
 			var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+
+			// Check if the table does not exist or has no records
+			if (_dbContext.RefreshTokens == null || !_dbContext.RefreshTokens.Any()) {
+				return token; // Return the token if the table has no records
+			}
+
 			// ensure token is unique by checking against db
 			var tokenIsUnique = _dbContext.RefreshTokens.Any(x => x.Token == token);
 			if (!tokenIsUnique) {
 				return RandomStringGeneration();
 			}
+
 			return token;
 		}
 	}

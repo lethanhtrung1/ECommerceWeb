@@ -1,4 +1,5 @@
 ﻿using ApplicationLayer.DTOs.Request.Product;
+using ApplicationLayer.DTOs.Response.Product;
 using AutoMapper;
 using DomainLayer.Entities;
 
@@ -7,6 +8,8 @@ namespace ApplicationLayer.MapperConfigs {
 		public static MapperConfiguration RegisterMaps() {
 			var mappingConfig = new MapperConfiguration(config => {
 				#region Domain to Response
+
+				config.CreateMap<Product, ProductResponseDto>();
 
 				#endregion
 

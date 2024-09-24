@@ -43,7 +43,8 @@ namespace InfrastructrureLayer.Data {
 			modelBuilder.Entity<UserProfile>(entity => {
 				entity.HasOne(d => d.ApplicationUser)
 					.WithOne(p => p.UserProfile)
-					.HasForeignKey<UserProfile>(d => d.UserId);
+					.HasForeignKey<UserProfile>(d => d.UserId)
+					.OnDelete(DeleteBehavior.Cascade);
 
 				entity.HasOne(d => d.Province)
 					.WithMany(p => p.UserInfomations)

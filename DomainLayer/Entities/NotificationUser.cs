@@ -7,7 +7,7 @@ namespace DomainLayer.Entities {
 		}
 
 		public Guid NotificationId { get; set; }
-		public Guid UserId { get; set; }
+		public string UserId { get; set; }
 		public bool Seen { get; set; }
 		public bool Status { get; set; }
 		public virtual Notification? Notification { get; set; }

@@ -7,8 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static ApplicationLayer.Common.Constant;
 
-namespace WebAPI.Controllers {
-	[Route("api/[controller]")]
+namespace WebAPI.Controllers
+{
+    [Route("api/[controller]")]
 	[ApiController]
 	public class AccountController : ControllerBase {
 		private readonly IAuthService _authService;
@@ -17,16 +18,8 @@ namespace WebAPI.Controllers {
 			_authService = authService;
 		}
 
-		[Authorize(Roles = Role.Admin)]
-		[HttpGet("setting/create-admin")]
-		public async Task<ActionResult> CreateAdmin() {
-			await _authService.CreateAdmin();
-			return Ok();
-		}
-
-
 		[HttpPost("identity/register")]
-		public async Task<ActionResult<GeneralResponse>> Registration(RegistrationRequestDto request) {
+		public async Task<ActionResult<GeneralResponse>> Register(RegistrationRequestDto request) {
 			if (!ModelState.IsValid) {
 				return BadRequest("Invalid payload");
 			}
@@ -50,13 +43,13 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("identity/role/get-all")]
+		[HttpGet("identity/role")]
 		public async Task<ActionResult<IEnumerable<GetRoleDto>>> GetRoles() {
 			return Ok(await _authService.GetRolesAsync());
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpPost("identity/role/create")]
+		[HttpPost("identity/role")]
 		public async Task<ActionResult<GeneralResponse>> CreateRole(CreateRoleRequestDto request) {
 			if (!ModelState.IsValid) {
 				return BadRequest("Invalid payload");
