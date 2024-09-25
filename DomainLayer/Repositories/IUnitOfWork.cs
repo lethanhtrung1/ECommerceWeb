@@ -18,6 +18,7 @@
 		IStoreRepository Store { get; }
 		IUserProfileRepository UserProfile { get; }
 		IWishListRepository WishList { get; }
+		IRefreshTokenRepository RefreshToken { get; }
 		Task SaveChangesAsync();
 	}
 }

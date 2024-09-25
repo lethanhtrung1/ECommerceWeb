@@ -8,9 +8,8 @@ using DomainLayer.Entities.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace ApplicationLayer.Services
-{
-    public class UserService : IUserService {
+namespace ApplicationLayer.Services {
+	public class UserService : IUserService {
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly RoleManager<IdentityRole> _roleManager;
 		private readonly ILogException _logger;
@@ -68,7 +67,7 @@ namespace ApplicationLayer.Services
 			return roles;
 		}
 
-		public Task<ApiResponse<UserResponseDto>> GetUserById(Guid userID) {
+		public Task<ApiResponse<UserResponseDto>> GetUserById(Guid userId) {
 			throw new NotImplementedException();
 		}
 

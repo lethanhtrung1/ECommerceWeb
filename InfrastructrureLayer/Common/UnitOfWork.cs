@@ -23,6 +23,7 @@ namespace InfrastructrureLayer.Common {
 		public IStoreRepository Store { get; set; }
 		public IUserProfileRepository UserProfile { get; set; }
 		public IWishListRepository WishList { get; set; }
+		public IRefreshTokenRepository RefreshToken { get; set; }
 
 		public UnitOfWork(AppDbContext dbContext) {
 			_dbContext = dbContext;
@@ -44,6 +45,7 @@ namespace InfrastructrureLayer.Common {
 			Store = new StoreRepository(_dbContext);
 			UserProfile = new UserProfileRepository(_dbContext);
 			WishList = new WishListRepository(_dbContext);
+			RefreshToken = new RefreshTokenRepository(_dbContext);
 		}
 
 		public async Task SaveChangesAsync() {

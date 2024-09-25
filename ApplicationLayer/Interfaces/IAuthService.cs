@@ -2,9 +2,8 @@
 using ApplicationLayer.DTOs.Response;
 using ApplicationLayer.DTOs.Response.Account;
 
-namespace ApplicationLayer.Interfaces
-{
-    public interface IAuthService {
+namespace ApplicationLayer.Interfaces {
+	public interface IAuthService {
 		Task<GeneralResponse> CreateRoleAsync(CreateRoleRequestDto request);
 		Task<GeneralResponse> CreateAccountAsync(RegistrationRequestDto request);
 		Task<AuthResponseDto> LoginAsync(LoginRequestDto request);

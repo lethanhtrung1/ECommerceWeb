@@ -2,10 +2,9 @@
 using ApplicationLayer.DTOs.Response.Account;
 using ApplicationLayer.Interfaces;
 using DomainLayer.Entities.Auth;
-using InfrastructrureLayer.Data;
+using DomainLayer.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,16 +14,16 @@ using System.Text;
 
 namespace InfrastructrureLayer.Authentication {
 	public class TokenService : ITokenService {
-		private readonly AppDbContext _dbContext;
 		private readonly UserManager<ApplicationUser> _userManager;
+		private readonly IUnitOfWork _unitOfWork;
 		private readonly IConfiguration _configuration;
 		private readonly IConfigurationSection _jwtSettings;
 		private readonly IHttpContextAccessor _httpContextAccessor;
 
-		public TokenService(AppDbContext dbContext, UserManager<ApplicationUser> userManager, 
+		public TokenService(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork,
 				IConfiguration configuration, IHttpContextAccessor httpContextAccessor) {
-			_dbContext = dbContext;
 			_userManager = userManager;
+			_unitOfWork = unitOfWork;
 			_configuration = configuration;
 			_jwtSettings = _configuration.GetSection("JwtSetting");
 			_httpContextAccessor = httpContextAccessor;
@@ -63,7 +62,6 @@ namespace InfrastructrureLayer.Authentication {
 			if (populateExp) {
 				// RefreshToken
 				var newRefreshToken = GenerateRefreshToken();
-
 				var newRefreshTokenToDb = new RefreshToken() {
 					JwtId = token.Id,
 					Token = newRefreshToken,
@@ -73,15 +71,14 @@ namespace InfrastructrureLayer.Authentication {
 					IsRevoked = false,
 					UserId = user.Id,
 				};
-				//newRefreshTokenToDb.ExpiryDate = DateTime.Now.AddDays(7);
 
-				await _dbContext.RefreshTokens.AddAsync(newRefreshTokenToDb);
-				await _dbContext.SaveChangesAsync();
+				await _unitOfWork.RefreshToken.AddAsync(newRefreshTokenToDb);
+				await _unitOfWork.SaveChangesAsync();
 			}
 
 			var accessToken = jwtTokenHandler.WriteToken(token);
-			var refreshToken = await _dbContext.RefreshTokens
-				.FirstOrDefaultAsync(x => x.UserId == user.Id && x.IsUsed == false && x.IsRevoked == false);
+			var refreshToken = await _unitOfWork.RefreshToken
+				.GetAsync(x => x.UserId == user.Id && x.IsUsed == false && x.IsRevoked == false);
 
 			return new TokenResponseDto(accessToken, refreshToken!.Token);
 		}
@@ -124,7 +121,7 @@ namespace InfrastructrureLayer.Authentication {
 			}
 
 			// Check token in db
-			var storedToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenDto.RefreshToken);
+			var storedToken = await _unitOfWork.RefreshToken.GetAsync(x => x.Token == tokenDto.RefreshToken);
 			if (storedToken is null || storedToken.IsUsed || storedToken.IsRevoked) {
 				throw new SecurityTokenException("Invalid token");
 			}
@@ -140,8 +137,8 @@ namespace InfrastructrureLayer.Authentication {
 			}
 
 			storedToken.IsUsed = true;
-			_dbContext.RefreshTokens.Update(storedToken);
-			await _dbContext.SaveChangesAsync();
+			await _unitOfWork.RefreshToken.UpdateAsync(storedToken);
+			await _unitOfWork.SaveChangesAsync();
 
 			var userFromDb = await _userManager.FindByIdAsync(storedToken.UserId);
 
@@ -175,13 +172,13 @@ namespace InfrastructrureLayer.Authentication {
 		}
 
 		public async Task RevokeRefreshToken(Guid userId, string token) {
-			var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token);
+			var refreshToken = await _unitOfWork.RefreshToken.GetAsync(x => x.Token == token);
 			if (refreshToken == null || refreshToken.UserId != userId.ToString()) {
 				throw new SecurityTokenException();
 			}
 			refreshToken.IsRevoked = true;
-			_dbContext.RefreshTokens.Update(refreshToken);
-			await _dbContext.SaveChangesAsync();
+			await _unitOfWork.RefreshToken.UpdateAsync(refreshToken);
+			await _unitOfWork.SaveChangesAsync();
 		}
 
 		private string GenerateRefreshToken() {
