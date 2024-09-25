@@ -30,10 +30,8 @@ namespace InfrastructrureLayer.DependencyInjection {
 				// Confirmation
 				options.SignIn.RequireConfirmedEmail = true;
 				options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
-
 				// // 2FA
 				options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultEmailProvider;
-
 				// Reset password
 				options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
 
@@ -55,8 +53,8 @@ namespace InfrastructrureLayer.DependencyInjection {
 			// Add Jwt authentication scheme
 			services.AddAuthentication(options => {
 				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 			}).AddJwtBearer(options => { // Add Jwt Bearer
 										 // allow store the token inside header for the authentication properties
 				options.SaveToken = true;
@@ -64,8 +62,8 @@ namespace InfrastructrureLayer.DependencyInjection {
 				options.TokenValidationParameters = new TokenValidationParameters {
 					ValidateIssuer = true,
 					ValidateAudience = true,
-					ValidateIssuerSigningKey = true,
 					ValidateLifetime = true,
+					ValidateIssuerSigningKey = true,
 					ValidIssuer = configuration["Authentication:Issuer"],
 					ValidAudience = configuration["Authentication:Audience"],
 					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Authentication:Key"]!)),
@@ -92,6 +90,7 @@ namespace InfrastructrureLayer.DependencyInjection {
 			// Dependency Injection (DI)
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
 			services.AddScoped<IAuthService, AuthService>();
+			services.AddScoped<ITokenService, TokenService>();
 			services.AddScoped<ILogException, LogException>();
 			services.AddScoped<IEmailSender, EmailSender>();
 

@@ -1,5 +1,4 @@
-﻿using ApplicationLayer.DTOs.Pagination;
-using ApplicationLayer.DTOs.Request.Account;
+﻿using ApplicationLayer.DTOs.Request.Account;
 using ApplicationLayer.DTOs.Response;
 using ApplicationLayer.DTOs.Response.Account;
 using ApplicationLayer.Interfaces;
@@ -43,12 +42,6 @@ namespace WebAPI.Controllers
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("identity/role")]
-		public async Task<ActionResult<IEnumerable<GetRoleDto>>> GetRoles() {
-			return Ok(await _authService.GetRolesAsync());
-		}
-
-		[Authorize(Roles = Role.Admin)]
 		[HttpPost("identity/role")]
 		public async Task<ActionResult<GeneralResponse>> CreateRole(CreateRoleRequestDto request) {
 			if (!ModelState.IsValid) {
@@ -57,22 +50,47 @@ namespace WebAPI.Controllers
 			return Ok(await _authService.CreateRoleAsync(request));
 		}
 
-		[Authorize(Roles = Role.Admin)]
-		[HttpGet("identity/users-with-role")]
-		public async Task<ActionResult<ApiResponse<PagedList<GetUserResponseDto>>>> GetUsersWithRole(PagingRequest request) {
-			return Ok(await _authService.GetUsersAsync(request));
-		}
-
-		[Authorize(Roles = Role.Admin)]
-		[HttpPost("identity/change-role")]
-		public async Task<ActionResult<GeneralResponse>> ChangeUserRole(ChangeUserRoleRequestDto request) {
-			return Ok(await _authService.ChangeUserRoleAsync(request));
-		}
-
 		[Authorize]
 		[HttpPost("identity/change-password")]
 		public async Task<ActionResult<GeneralResponse>> ChangePassword(ChangePasswordRequestDto request) {
+			if (!ModelState.IsValid) {
+				return BadRequest("Invalid payload");
+			}
 			return Ok(await _authService.ChangePasswordAsync(request));
+		}
+
+		[HttpPost("identity/email-confirmation")]
+		public async Task<ActionResult<GeneralResponse>> EmailConfirmation(VerifyEmailRequestDto request) {
+			if (!ModelState.IsValid) {
+				return BadRequest("Invalid payload");
+			}
+			return Ok(await _authService.EmailConfirmation(request));
+		}
+
+		[HttpPost("identity/forgot-password")]
+		public async Task<ActionResult<GeneralResponse>> ForgotPassword(ForgotPasswordRequestDto request) {
+			if (!ModelState.IsValid) {
+				return BadRequest("Invalid payload");
+			}
+			return Ok(await _authService.ForgotPassword(request));
+		}
+
+		[HttpPost("identity/reset-password")]
+		public async Task<ActionResult<GeneralResponse>> ResetPassword(ResetPasswordRequestDto request) {
+			if (!ModelState.IsValid) {
+				return BadRequest("Invalid payload");
+			}
+			return Ok(await _authService.ResetPassword(request));
+		}
+
+		[HttpPost("identity/enable-2fa")]
+		public async Task<ActionResult<GeneralResponse>> EnableTwoFactor(string email) {
+			return Ok(await _authService.EnableTwoFactor(email));
+		}
+
+		[HttpPost("identity/disable-2fa")]
+		public async Task<ActionResult<GeneralResponse>> DisableTwoFactor(string email) {
+			return Ok(await _authService.DisableTwoFactor(email));
 		}
 	}
 }

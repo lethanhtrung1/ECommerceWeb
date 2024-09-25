@@ -10,6 +10,7 @@ namespace ApplicationLayer.DependencyInjection {
 	public static class ServiceContainer {
 		public static IServiceCollection AddApplicationService(this IServiceCollection services) {
 			services.AddScoped<IProduct, ProductService>();
+			services.AddScoped<IUserService, UserService>();
 
 			// Config auto mapper
 			IMapper mapper = MapperExtension.RegisterMaps().CreateMapper();

@@ -1,4 +1,4 @@
-﻿namespace ApplicationLayer.DTOs.Response.Account
+﻿namespace ApplicationLayer.DTOs.Response
 {
     public record GeneralResponse(bool IsSuccess = false, string Message = null!);
 }

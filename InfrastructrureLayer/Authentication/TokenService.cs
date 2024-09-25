@@ -13,21 +13,29 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace InfrastructrureLayer.Authentication
-{
-    public class TokenService : ITokenService {
+namespace InfrastructrureLayer.Authentication {
+	public class TokenService : ITokenService {
 		private readonly AppDbContext _dbContext;
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly IConfiguration _configuration;
 		private readonly IConfigurationSection _jwtSettings;
+		private readonly IHttpContextAccessor _httpContextAccessor;
 
-		public TokenService(AppDbContext dbContext, UserManager<ApplicationUser> userManager, IConfiguration configuration) {
+		public TokenService(AppDbContext dbContext, UserManager<ApplicationUser> userManager, 
+				IConfiguration configuration, IHttpContextAccessor httpContextAccessor) {
 			_dbContext = dbContext;
 			_userManager = userManager;
 			_configuration = configuration;
 			_jwtSettings = _configuration.GetSection("JwtSetting");
+			_httpContextAccessor = httpContextAccessor;
 		}
 
+		/// <summary>
+		/// Generate token
+		/// </summary>
+		/// <param name="user"></param>
+		/// <param name="populateExp"></param>
+		/// <returns>TokenResponseDto(accessToken, refreshToken)</returns>
 		public async Task<TokenResponseDto> GenerateToken(ApplicationUser user, bool populateExp) {
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -37,7 +45,6 @@ namespace InfrastructrureLayer.Authentication
 			var tokenDescriptor = new SecurityTokenDescriptor() {
 				Audience = _configuration.GetSection("Authentication:Audience").Value,
 				Issuer = _configuration.GetSection("Authentication:Issuer").Value,
-
 				Subject = new ClaimsIdentity(new[] {
 					new Claim("Id", user.Id),
 					new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
@@ -46,39 +53,46 @@ namespace InfrastructrureLayer.Authentication
 					new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString()),
 					new Claim(ClaimTypes.Role, (await _userManager.GetRolesAsync(user)).FirstOrDefault()!.ToString())
 				}),
-
 				// how long will this token lives
 				Expires = DateTime.UtcNow.Add(TimeSpan.Parse(_configuration.GetSection("Authentication:ExpiryTimeFrame").Value!)),
-
 				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
 			};
 
 			var token = jwtTokenHandler.CreateToken(tokenDescriptor);
 
-			// RefreshToken
-			var refreshToken = GenerateRefreshToken();
-			var refreshTokenToDb = new RefreshToken() {
-				JwtId = token.Id,
-				Token = refreshToken,
-				AddedDate = DateTime.UtcNow,
-				//ExpiryDate = DateTime.Now.AddDays(7),
-				IsUsed = false,
-				IsRevoked = false,
-				UserId = user.Id,
-			};
-
 			if (populateExp) {
-				refreshTokenToDb.ExpiryDate = DateTime.Now.AddDays(7);
+				// RefreshToken
+				var newRefreshToken = GenerateRefreshToken();
+
+				var newRefreshTokenToDb = new RefreshToken() {
+					JwtId = token.Id,
+					Token = newRefreshToken,
+					AddedDate = DateTime.UtcNow,
+					ExpiryDate = DateTime.Now.AddDays(7),
+					IsUsed = false,
+					IsRevoked = false,
+					UserId = user.Id,
+				};
+				//newRefreshTokenToDb.ExpiryDate = DateTime.Now.AddDays(7);
+
+				await _dbContext.RefreshTokens.AddAsync(newRefreshTokenToDb);
+				await _dbContext.SaveChangesAsync();
 			}
-			await _dbContext.RefreshTokens.AddAsync(refreshTokenToDb);
-			await _dbContext.SaveChangesAsync();
 
 			var accessToken = jwtTokenHandler.WriteToken(token);
+			var refreshToken = await _dbContext.RefreshTokens
+				.FirstOrDefaultAsync(x => x.UserId == user.Id && x.IsUsed == false && x.IsRevoked == false);
 
-			return new TokenResponseDto(accessToken, refreshToken);
+			return new TokenResponseDto(accessToken, refreshToken!.Token);
 		}
 
 
+		/// <summary>
+		/// Verify and Generate Token
+		/// </summary>
+		/// <param name="tokenDto"></param>
+		/// <returns>TokenResponseDto(accessToken, refreshToken)</returns>
+		/// <exception cref="SecurityTokenException"></exception>
 		public async Task<TokenResponseDto> RefreshToken(TokenRequest tokenDto) {
 			var jwtSettings = _configuration.GetSection("JwtSettings");
 			var tokenValidationParameters = new TokenValidationParameters {
@@ -135,28 +149,30 @@ namespace InfrastructrureLayer.Authentication
 		}
 
 
-		public void SetTokensInsideCookie(TokenRequest token, HttpContext context) {
-			context.Response.Cookies.Append("accessToken", token.AccessToken,
-				new CookieOptions {
-					Expires = DateTimeOffset.UtcNow.AddMinutes(5),
-					HttpOnly = true,
-					IsEssential = true,
-					Secure = true,
-					SameSite = SameSiteMode.None
-				}
-			);
+		public void SetTokensInsideCookie(TokenRequest token) {
+			var context = _httpContextAccessor.HttpContext;
+			if (context != null) {
+				context.Response.Cookies.Append("accessToken", token.AccessToken,
+					new CookieOptions {
+						Expires = DateTimeOffset.UtcNow.AddMinutes(5),
+						HttpOnly = true,
+						IsEssential = true,
+						Secure = true,
+						SameSite = SameSiteMode.None
+					}
+				);
 
-			context.Response.Cookies.Append("refreshToken", token.RefreshToken,
-				new CookieOptions {
-					Expires = DateTimeOffset.UtcNow.AddDays(7),
-					HttpOnly = true,
-					IsEssential = true,
-					Secure = true,
-					SameSite = SameSiteMode.None
-				}
-			);
+				context.Response.Cookies.Append("refreshToken", token.RefreshToken,
+					new CookieOptions {
+						Expires = DateTimeOffset.UtcNow.AddDays(7),
+						HttpOnly = true,
+						IsEssential = true,
+						Secure = true,
+						SameSite = SameSiteMode.None
+					}
+				);
+			}
 		}
-
 
 		public async Task RevokeRefreshToken(Guid userId, string token) {
 			var refreshToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token);
