@@ -67,8 +67,30 @@ namespace ApplicationLayer.Services {
 			return roles;
 		}
 
-		public Task<ApiResponse<UserResponseDto>> GetUserById(Guid userId) {
-			throw new NotImplementedException();
+		public async Task<ApiResponse<UserResponseDto>> GetUserByIdAsync(Guid userId) {
+			try {
+				var user = await _userManager.FindByIdAsync(userId.ToString());
+
+				if (user is null) {
+					return new ApiResponse<UserResponseDto>(false, "User not found");
+				}
+
+				var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+				var roleInfo = await _roleManager.Roles.FirstOrDefaultAsync(x => x.Name!.ToLower() == role!.ToLower());
+				var userWithRole = new UserResponseDto {
+					Id = user.Id,
+					Name = user.Name,
+					Email = user.Email,
+					RoleId = roleInfo!.Id,
+					RoleName = roleInfo.Name,
+				};
+
+				return new ApiResponse<UserResponseDto>(userWithRole, true, "");
+			} catch (Exception ex) {
+				// Log the original exception
+				_logger.LogExceptions(ex);
+				throw;
+			}
 		}
 
 		public async Task<ApiResponse<PagedList<UserResponseDto>>> GetUsersAsync(PagingRequest request) {

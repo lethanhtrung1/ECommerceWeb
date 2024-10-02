@@ -8,6 +8,6 @@ namespace ApplicationLayer.Interfaces {
 		Task<GeneralResponse> ChangeUserRoleAsync(ChangeUserRoleRequestDto request);
 		Task<IEnumerable<GetRoleDto>> GetRolesAsync();
 		Task<ApiResponse<PagedList<UserResponseDto>>> GetUsersAsync(PagingRequest request);
-		Task<ApiResponse<UserResponseDto>> GetUserById(Guid userId);
+		Task<ApiResponse<UserResponseDto>> GetUserByIdAsync(Guid userId);
 	}
 }

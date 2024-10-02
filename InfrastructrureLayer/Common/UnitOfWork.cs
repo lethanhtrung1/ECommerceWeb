@@ -21,6 +21,7 @@ namespace InfrastructrureLayer.Common {
 		public IProductReviewRepository ProductReview { get; set; }
 		public IShipmentRepository Shipment { get; set; }
 		public IStoreRepository Store { get; set; }
+		public IBrandRepository Brand { get; set; }
 		public IUserProfileRepository UserProfile { get; set; }
 		public IWishListRepository WishList { get; set; }
 		public IRefreshTokenRepository RefreshToken { get; set; }
@@ -43,6 +44,7 @@ namespace InfrastructrureLayer.Common {
 			ProductReview = new ProductReviewRepository(_dbContext);
 			Shipment = new ShipmentRepository(_dbContext);
 			Store = new StoreRepository(_dbContext);
+			Brand = new BrandRepository(_dbContext);
 			UserProfile = new UserProfileRepository(_dbContext);
 			WishList = new WishListRepository(_dbContext);
 			RefreshToken = new RefreshTokenRepository(_dbContext);

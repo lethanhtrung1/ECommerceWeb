@@ -29,6 +29,7 @@ namespace InfrastructrureLayer.Data {
 		public DbSet<Size> Sizes { get; set; }
 		public DbSet<Color> Colors { get; set; }
 		public DbSet<Store> Stores { get; set; }
+		public DbSet<Brand> Brands { get; set; }
 		public DbSet<Province> Provinces { get; set; }
 		public DbSet<District> Districts { get; set; }
 		public DbSet<Ward> Wards { get; set; }
@@ -102,6 +103,11 @@ namespace InfrastructrureLayer.Data {
 
 				entity.HasMany(d => d.Carts)
 					.WithOne(p => p.Product)
+					.OnDelete(DeleteBehavior.NoAction);
+
+				entity.HasOne(d => d.Brand)
+					.WithMany(p => p.Products)
+					.HasForeignKey(p => p.BrandId)
 					.OnDelete(DeleteBehavior.NoAction);
 			});
 
@@ -178,6 +184,12 @@ namespace InfrastructrureLayer.Data {
 			modelBuilder.Entity<Size>(entity => {
 				entity.HasMany(d => d.ProductSizes)
 					.WithOne(p => p.Size);
+			});
+
+			modelBuilder.Entity<Brand>(entity => {
+				entity.HasMany(d => d.Products)
+					.WithOne(p => p.Brand)
+					.OnDelete(DeleteBehavior.Cascade);
 			});
 
 			modelBuilder.Entity<WishList>(entity => {

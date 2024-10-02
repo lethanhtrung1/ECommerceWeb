@@ -16,6 +16,7 @@
 		IProductColorRepository ProductColor { get; }
 		IShipmentRepository Shipment { get; }
 		IStoreRepository Store { get; }
+		IBrandRepository Brand { get; }
 		IUserProfileRepository UserProfile { get; }
 		IWishListRepository WishList { get; }
 		IRefreshTokenRepository RefreshToken { get; }

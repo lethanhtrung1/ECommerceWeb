@@ -24,6 +24,11 @@ namespace ApplicationLayer.MapperConfigs {
 						dest => dest.UpdatedAt,
 						opt => opt.MapFrom(src => DateTime.Now));
 
+				config.CreateMap<UpdateProductRequestDto, Product>()
+					.ForMember(
+						dest => dest.UpdatedAt,
+						opt => opt.MapFrom(src => DateTime.Now));
+
 				#endregion
 			});
 

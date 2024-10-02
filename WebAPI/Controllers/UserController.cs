@@ -19,7 +19,7 @@ namespace WebAPI.Controllers
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("user/role")]
+		[HttpGet("user/roles")]
 		public async Task<ActionResult<IEnumerable<GetRoleDto>>> GetRoles() {
 			return Ok(await _userService.GetRolesAsync());
 		}
@@ -28,6 +28,12 @@ namespace WebAPI.Controllers
 		[HttpGet("user/users-with-role")]
 		public async Task<ActionResult<ApiResponse<PagedList<UserResponseDto>>>> GetUsersWithRole(PagingRequest request) {
 			return Ok(await _userService.GetUsersAsync(request));
+		}
+
+		[Authorize(Roles = Role.Admin)]
+		[HttpGet("user/{userId:Guid}")]
+		public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetUserById(Guid userId) {
+			return Ok(await _userService.GetUserByIdAsync(userId));
 		}
 
 		[Authorize(Roles = Role.Admin)]

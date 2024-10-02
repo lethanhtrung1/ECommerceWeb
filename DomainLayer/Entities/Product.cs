@@ -19,17 +19,15 @@ namespace DomainLayer.Entities {
 		public int Stock { get; set; } = 0;
 		public int Sold { get; set; } = 0;
 		public ProductStatus ProductStatus { get; set; }
-		public string? ProductImage { get; set; }
-
-		public Guid? CategoryId { get; set; }
-		public Guid? StoreId { get; set; }
-
+		public string? Thumnail { get; set; }
+		//public Guid? CategoryId { get; set; }
+		public Guid? BrandId { get; set; }
 		public string? CreatedBy { get; set; }
 		public string? UpdatedBy { get; set; }
 		public DateTime CreatedAt { get; set; }
 		public DateTime UpdatedAt { get; set; }
 
-		public virtual Store? Store { get; set; }
+		public virtual Brand? Brand { get; set; }
 		public virtual Category? Category { get; set; }
 		public virtual ICollection<Cart> Carts { get; set; }
 		public virtual ICollection<ProductImage> ProductImages { get; set; }

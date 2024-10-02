@@ -56,7 +56,6 @@ namespace InfrastructrureLayer.DependencyInjection {
 				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 				options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 			}).AddJwtBearer(options => { // Add Jwt Bearer
-										 // allow store the token inside header for the authentication properties
 				options.SaveToken = true;
 				// allow verify token
 				options.TokenValidationParameters = new TokenValidationParameters {
@@ -68,6 +67,16 @@ namespace InfrastructrureLayer.DependencyInjection {
 					ValidAudience = configuration["Authentication:Audience"],
 					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Authentication:Key"]!)),
 					ClockSkew = TimeSpan.Zero, // Messes with expiry
+				};
+				// Use HttpOnly Cookie
+				options.Events = new JwtBearerEvents {
+					OnMessageReceived = context => {
+						context.Request.Cookies.TryGetValue("accessToken", out var accessToken);
+						if (!string.IsNullOrEmpty(accessToken)) {
+							context.Token = accessToken;
+						}
+						return Task.CompletedTask;
+					}
 				};
 			});
 

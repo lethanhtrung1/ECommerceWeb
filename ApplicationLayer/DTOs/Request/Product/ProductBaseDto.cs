@@ -1,20 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DomainLayer.Enums;
 
 namespace ApplicationLayer.DTOs.Request.Product {
 	public class ProductBaseDto {
-		[Required]
-		public string Name { get; set; }
+		public string? Name { get; set; }
 		public string? Description { get; set; }
-		public double Price { get; set; }
-		public int Quantity { get; set; } = 0;
+		public decimal Price { get; set; }
+		public int Stock { get; set; }
 		public int Sold { get; set; } = 0;
-		public string Brand { get; set; } = default!;
-		public string? ProductImage { get; set; }
+		public ProductStatus ProductStatus { get; set; }
+		public string? Thumnail { get; set; }
+		public Guid BrandId { get; set; }
+		public List<Guid>? CategoriyIds {  get; set; }
+		public List<Guid>? SizeIds { get; set; }
+		public List<Guid>? ColorIds { get; set; }
+		public List<string>? ProductImages { get; set; }
 		public string? CreatedBy { get; set; }
 		public string? UpdatedBy { get; set; }
-		public DateTime CreatedAt { get; set; } = DateTime.Now;
+		public DateTime CreatedAt { get; set; }
 		public DateTime UpdatedAt { get; set; }
-
-		public Guid CategoryId {  get; set; }
 	}
 }

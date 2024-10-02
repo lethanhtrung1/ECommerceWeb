@@ -4,7 +4,7 @@ namespace DomainLayer.Entities {
 	public class Store : BaseEntity {
 		public Store() {
 			Id = Guid.NewGuid();
-			Products = new HashSet<Product>();
+			//Products = new HashSet<Product>();
 		}
 
 		public string SellerId { get; set; }
@@ -14,7 +14,7 @@ namespace DomainLayer.Entities {
 		public string ContactNumber { get; set; } = null!;
 		public string? StoreLogo { get; set; }
 		
-		public virtual ApplicationUser? Seller { get; set; }
-		public virtual ICollection<Product> Products { get; set; }
+		//public virtual ApplicationUser? Seller { get; set; }
+		//public virtual ICollection<Product> Products { get; set; }
 	}
 }
