@@ -19,18 +19,43 @@ namespace InfrastructrureLayer.Common {
 			await dbSet.AddAsync(entity);
 		}
 
-		public async Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>>? filter = null) {
+		//public async Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>>? filter = null) {
+		//	IQueryable<T> query = dbSet;
+		//	if (filter != null) {
+		//		query = query.Where(filter);
+		//	}
+
+		//	return await query.ToListAsync();
+		//}
+
+		public async Task<IEnumerable<T>> GetListAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null) {
 			IQueryable<T> query = dbSet;
 			if (filter != null) {
 				query = query.Where(filter);
 			}
-
+			if (!string.IsNullOrEmpty(includeProperties)) {
+				foreach (var property in includeProperties.Split(new Char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) {
+					query = query.Include(property);
+				}
+			}
 			return await query.ToListAsync();
 		}
 
 		public async Task<T> GetAsync(Expression<Func<T, bool>> filter) {
 			IQueryable<T> query = dbSet.Where(filter);
 
+			return await query.FirstAsync();
+		}
+
+		public async Task<T> GetAsync(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false) {
+			IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
+			query = query.Where(filter);
+			if (!string.IsNullOrEmpty(includeProperties)) {
+				foreach (var property in includeProperties.Split(new Char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) {
+					query = query.Include(property);
+				}
+			}
+			//query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
 			return await query.FirstAsync();
 		}
 

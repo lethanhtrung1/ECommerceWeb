@@ -22,6 +22,7 @@ namespace DomainLayer.Entities {
 		public string? Thumnail { get; set; }
 		//public Guid? CategoryId { get; set; }
 		public Guid? BrandId { get; set; }
+		public bool Published { get; set; }
 		public string? CreatedBy { get; set; }
 		public string? UpdatedBy { get; set; }
 		public DateTime CreatedAt { get; set; }

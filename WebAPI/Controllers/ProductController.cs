@@ -16,7 +16,7 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("product/{Id:Guid}")]
+		[HttpGet("{Id:Guid}")]
 		public async Task<IActionResult> GetProductById(Guid productId) {
 			if (productId == Guid.Empty) {
 				return BadRequest("Invalid payload");
@@ -25,7 +25,7 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("product")]
+		[HttpGet]
 		public async Task<IActionResult> GetProducts([FromQuery] PagingRequest request) {
 			if (request == null) {
 				return BadRequest("Invalid payload");
@@ -34,7 +34,7 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpPost("product")]
+		[HttpPost]
 		public async Task<IActionResult> AddProduct([FromBody] CreateProductRequestDto request) {
 			if (request == null) {
 				return BadRequest("Invalid payload");
@@ -43,7 +43,7 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpPut("product")]
+		[HttpPut]
 		public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductRequestDto request) {
 			if (request == null) {
 				return BadRequest("Invalid payload");
@@ -52,12 +52,21 @@ namespace WebAPI.Controllers {
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpDelete("product")]
+		[HttpDelete]
 		public async Task<IActionResult> DeleteProduct(Guid productId) {
 			if (productId == Guid.Empty) {
 				return BadRequest("Invalid payload");
 			}
 			return Ok(await _productService.DeleteAsync(productId));
+		}
+
+		[Authorize(Roles = Role.Admin)]
+		[HttpDelete("remove-list")]
+		public async Task<IActionResult> DeleteProducts(IEnumerable<Guid> productIds) {
+			if (productIds is null || productIds.Count() == 0) {
+				return BadRequest("Invalid payload");
+			}
+			return Ok(await _productService.DeleteListAsync(productIds));
 		}
 	}
 }

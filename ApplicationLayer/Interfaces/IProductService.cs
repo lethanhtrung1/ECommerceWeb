@@ -1,4 +1,5 @@
 ﻿using ApplicationLayer.DTOs.Pagination;
+using ApplicationLayer.DTOs.Request;
 using ApplicationLayer.DTOs.Request.Product;
 using ApplicationLayer.DTOs.Response;
 using ApplicationLayer.DTOs.Response.Product;
@@ -10,5 +11,7 @@ namespace ApplicationLayer.Interfaces {
 		Task<ApiResponse<ProductResponseDto>> AddAsync(CreateProductRequestDto request);
 		Task<ApiResponse<ProductResponseDto>> UpdateAsync(UpdateProductRequestDto request);
 		Task<GeneralResponse> DeleteAsync(Guid productId);
+		Task<GeneralResponse> DeleteListAsync(IEnumerable<Guid> productIds);
+		//Task<ApiResponse<PagedList<ProductResponseDto>>> SearchProductAsync(SearchPagingRequest request);
 	}
 }

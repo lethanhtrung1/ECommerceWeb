@@ -1,7 +1,5 @@
 ﻿using ApplicationLayer.DTOs.Pagination;
 using ApplicationLayer.DTOs.Request.Account;
-using ApplicationLayer.DTOs.Response;
-using ApplicationLayer.DTOs.Response.User;
 using ApplicationLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,26 +17,26 @@ namespace WebAPI.Controllers
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("user/roles")]
-		public async Task<ActionResult<IEnumerable<GetRoleDto>>> GetRoles() {
+		[HttpGet("roles")]
+		public async Task<IActionResult> GetRoles() {
 			return Ok(await _userService.GetRolesAsync());
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("user/users-with-role")]
-		public async Task<ActionResult<ApiResponse<PagedList<UserResponseDto>>>> GetUsersWithRole(PagingRequest request) {
+		[HttpGet("users-with-role")]
+		public async Task<IActionResult> GetUsersWithRole(PagingRequest request) {
 			return Ok(await _userService.GetUsersAsync(request));
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpGet("user/{userId:Guid}")]
-		public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetUserById(Guid userId) {
+		[HttpGet("{userId:Guid}")]
+		public async Task<IActionResult> GetUserById(Guid userId) {
 			return Ok(await _userService.GetUserByIdAsync(userId));
 		}
 
 		[Authorize(Roles = Role.Admin)]
-		[HttpPost("user/change-role")]
-		public async Task<ActionResult<GeneralResponse>> ChangeUserRole(ChangeUserRoleRequestDto request) {
+		[HttpPost("change-role")]
+		public async Task<IActionResult> ChangeUserRole(ChangeUserRoleRequestDto request) {
 			return Ok(await _userService.ChangeUserRoleAsync(request));
 		}
 	}

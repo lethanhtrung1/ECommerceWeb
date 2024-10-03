@@ -1,4 +1,6 @@
-﻿using ApplicationLayer.DTOs.Request.Product;
+﻿using ApplicationLayer.DTOs.Request.Category;
+using ApplicationLayer.DTOs.Request.Product;
+using ApplicationLayer.DTOs.Response.Category;
 using ApplicationLayer.DTOs.Response.Product;
 using AutoMapper;
 using DomainLayer.Entities;
@@ -10,23 +12,27 @@ namespace ApplicationLayer.MapperConfigs {
 				#region Domain to Response
 
 				config.CreateMap<Product, ProductResponseDto>();
+				config.CreateMap<Category, CategoryResponseDto>();
 
 				#endregion
 
 
 				#region Request to Domain
-				
+
 				config.CreateMap<CreateProductRequestDto, Product>()
 					.ForMember(
-						dest => dest.CreatedAt,
-						opt => opt.MapFrom(src => DateTime.Now))
+						dest => dest.Published,
+						opt => opt.MapFrom(src => true))
 					.ForMember(
-						dest => dest.UpdatedAt,
+						dest => dest.CreatedAt,
 						opt => opt.MapFrom(src => DateTime.Now));
 
-				config.CreateMap<UpdateProductRequestDto, Product>()
+				config.CreateMap<CreateCategoryRequestDto, Category>()
 					.ForMember(
-						dest => dest.UpdatedAt,
+						dest => dest.Published,
+						opt => opt.MapFrom(src => true))
+					.ForMember(
+						dest => dest.CreatedAt,
 						opt => opt.MapFrom(src => DateTime.Now));
 
 				#endregion

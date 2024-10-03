@@ -10,10 +10,11 @@ namespace ApplicationLayer.DTOs.Request.Product {
 		public ProductStatus ProductStatus { get; set; }
 		public string? Thumnail { get; set; }
 		public Guid BrandId { get; set; }
-		public List<Guid>? CategoriyIds {  get; set; }
-		public List<Guid>? SizeIds { get; set; }
-		public List<Guid>? ColorIds { get; set; }
-		public List<string>? ProductImages { get; set; }
+		public bool Published { get; set; }
+		//public List<Guid>? CategoriyIds {  get; set; }
+		//public List<Guid>? SizeIds { get; set; }
+		//public List<Guid>? ColorIds { get; set; }
+		//public List<string>? ProductImages { get; set; }
 		public string? CreatedBy { get; set; }
 		public string? UpdatedBy { get; set; }
 		public DateTime CreatedAt { get; set; }

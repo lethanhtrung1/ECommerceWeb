@@ -70,6 +70,24 @@ namespace ApplicationLayer.Services {
 			}
 		}
 
+		public async Task<GeneralResponse> DeleteListAsync(IEnumerable<Guid> productIds) {
+			try {
+				var products = await _unitOfWork.Product.GetListAsync(x => productIds.Contains(x.Id));
+
+				if (products is null || products.Count() == 0) {
+					return new GeneralResponse(false, "No record avaliable");
+				}
+
+				await _unitOfWork.Product.RemoveRangeAsync(products);
+				await _unitOfWork.SaveChangesAsync();
+
+				return new GeneralResponse(true, "Deleted successfully");
+			} catch (Exception ex) {
+				_logger.LogExceptions(ex);
+				return new GeneralResponse(false, ex.Message);
+			}
+		}
+
 		public async Task<ApiResponse<ProductResponseDto>> GetProductAsync(Guid productId) {
 			try {
 				var product = await _unitOfWork.Product.GetAsync(x => x.Id == productId);
@@ -90,7 +108,7 @@ namespace ApplicationLayer.Services {
 		public async Task<ApiResponse<PagedList<ProductResponseDto>>> GetProductsAsync(PagingRequest request) {
 			try {
 				var products = await _unitOfWork.Product.GetListAsync();
-				var productsPageList = products.Skip(request.PageNumber - 1).Take((request.PageNumber - 1) * request.PageSize);
+				var productsPageList = products.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize);
 				int totalRecord = products.Count();
 
 				if (productsPageList is null || productsPageList.Count() == 0) {
@@ -136,8 +154,8 @@ namespace ApplicationLayer.Services {
 				productFromDB.UpdatedAt = DateTime.Now;
 				productFromDB.UpdatedBy = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+				await _unitOfWork.Product.UpdateAsync(productFromDB);
 				await _unitOfWork.SaveChangesAsync();
-
 				await _unitOfWork.Product.EndTransactionAsync();
 
 				var result = _mapper.Map<ProductResponseDto>(productFromDB);

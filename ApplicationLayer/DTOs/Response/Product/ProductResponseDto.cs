@@ -10,6 +10,7 @@ namespace ApplicationLayer.DTOs.Response.Product {
 		public int Sold { get; set; }
 		public ProductStatus ProductStatus { get; set; }
 		public string? Thumnail { get; set; }
+		public bool Published { get; set; }
 		//public ProductStoreDto? Store { get; set; }
 		//public List<ProductCategoryDto>? Categories { get; set; }
 		//public List<ProductImageDto>? Images { get; set; }
